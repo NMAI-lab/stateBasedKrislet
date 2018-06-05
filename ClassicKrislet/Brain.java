@@ -37,72 +37,97 @@ class Brain extends Thread implements SensorInput
     //---------------------------------------------------------------------------
     // This is main brain function used to make decision
     // In each cycle we decide which command to issue based on
-    // current situation. the rules are:
+    // current situation. The rules are:
     //
-    //	1. If you don't know where is ball then turn right and wait for new info
+    //	1. If you don't know where ball is then turn right and wait for new info
     //
     //	2. If ball is too far to kick it then
     //		2.1. If we are directed towards the ball then go to the ball
     //		2.2. else turn to the ball
     //
-    //	3. If we dont know where is opponent goal then turn wait 
+    //	3. If we don't know where opponent goal is then turn
     //				and wait for new info
     //
     //	4. Kick ball
     //
-    //	To ensure that we don't send commands to often after each cycle
-    //	we waits one simulator steps. (This of course should be done better)
+    //	To ensure that we don't send commands too often after each cycle
+    //	we wait one simulator step. (This of course should be done better)
 
     // ***************  Improvements ******************
-    // Allways know where the goal is.
+    // Always know where the goal is.
     // Move to a place on my side on a kick_off
     // ************************************************
 
     public void run()
     {
 	ObjectInfo object;
-
+	boolean kickedBall = false;
+	int n = 0;
+	
 	// first put it somewhere on my side
 	if(Pattern.matches("^before_kick_off.*",m_playMode))
 	    m_krislet.move( -Math.random()*52.5 , 34 - Math.random()*68.0 );
 
 	while( !m_timeOver )
 	    {
-		object = m_memory.getObject("ball");
-		if( object == null )
-		    {
-			// If you don't know where is ball then find it
-			m_krislet.turn(40);
-			m_memory.waitForNewInfo();
-		    }
-		else if( object.m_distance > 1.0 )
-		    {
-			// If ball is too far then
-			// turn to ball or 
-			// if we have correct direction then go to ball
-			if( object.m_direction != 0 )
-			    m_krislet.turn(object.m_direction);
-			else
-			    m_krislet.dash(10*object.m_distance);
-		    }
-		else 
-		    {
-			// We know where is ball and we can kick it
-			// so look for goal
-			if( m_side == 'l' )
-			    object = m_memory.getObject("goal r");
-			else
-			    object = m_memory.getObject("goal l");
-
+		if( kickedBall == false )
+			{
+			object = m_memory.getObject("ball");
 			if( object == null )
 			    {
+				// If you don't know where is ball then find it
 				m_krislet.turn(40);
 				m_memory.waitForNewInfo();
 			    }
-			else
-			    m_krislet.kick(100, object.m_direction);
-		    }
-
+			else if( object.m_distance > 1.0 )
+			    {
+				// If ball is too far then
+				// turn to ball or 
+				// if we have correct direction then go to ball
+				if( object.m_direction != 0 )
+				    m_krislet.turn(object.m_direction);
+				else
+				    m_krislet.dash(10*object.m_distance); 
+			    }
+			else 
+			    {
+				// We know where is ball and we can kick it
+				// so look for goal
+				if( m_side == 'l' )
+				    object = m_memory.getObject("goal r");
+				else
+				    object = m_memory.getObject("goal l");
+	
+				if( object == null )
+				    {
+					m_krislet.turn(40);
+					m_memory.waitForNewInfo();
+				    }
+				else
+					{
+				    m_krislet.kick(100, object.m_direction);
+				    kickedBall = true;
+					}
+			    }
+			}
+		// Do a spin if you just kicked the ball
+		else if( kickedBall == true )
+			{
+			object = m_memory.getObject("ball");
+			while ( object != null )
+				{
+				m_krislet.turn(Math.pow(-1, n)*-80);
+				object = m_memory.getObject("ball");
+				}
+			while ( object == null )
+				{
+				m_krislet.turn(Math.pow(-1, n)*-30);
+				object = m_memory.getObject("ball");
+				}
+			kickedBall = false;
+			n++;
+			}
+		
 		// sleep one step to ensure that we will not send
 		// two commands in one cycle.
 		try{
@@ -114,7 +139,7 @@ class Brain extends Thread implements SensorInput
 
 
     //===========================================================================
-    // Here are suporting functions for implement logic
+    // Here are supporting functions for implement logic
 
 
     //===========================================================================
@@ -146,7 +171,7 @@ class Brain extends Thread implements SensorInput
 
     //===========================================================================
     // Private members
-    private SendCommand	                m_krislet;			// robot which is controled by this brain
+    private SendCommand	                m_krislet;			// robot which is controlled by this brain
     private Memory			m_memory;				// place where all information is stored
     private char			m_side;
     volatile private boolean		m_timeOver;
