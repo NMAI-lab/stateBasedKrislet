@@ -1,2 +1,7 @@
 Source/\.project
 Source/\.classpath
+/bin/
+
+\.project
+
+\.classpath
