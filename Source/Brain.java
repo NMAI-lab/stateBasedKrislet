@@ -64,6 +64,7 @@ class Brain extends Thread implements SensorInput
 	boolean kickedBall = false;
 	ObjectInfo goal = null;
 	int n = 0;
+	int spinned = 0;
 	
 	// first put it somewhere on my side
 	if(Pattern.matches("^before_kick_off.*",m_playMode))
@@ -136,19 +137,17 @@ class Brain extends Thread implements SensorInput
 		// Do a spin if you just kicked the ball
 		else
 			{
-			object = m_memory.getObject("ball");
-			while ( object != null )
+			while ( spinned < 360 )
 				{
-				m_krislet.turn(Math.pow(-1, n)*-80);
-				object = m_memory.getObject("ball");
-				}
-			while ( object == null )
-				{
-				m_krislet.turn(Math.pow(-1, n)*-30);
-				object = m_memory.getObject("ball");
+				m_krislet.turn(Math.pow(-1, n)*-40);
+				spinned += 40;
+				try{
+				    Thread.sleep(1*SoccerParams.simulator_step);
+				}catch(Exception e){}
 				}
 			kickedBall = false;
 			n++;
+			spinned = 0;
 			}
 		
 		// sleep one step to ensure that we will not send
