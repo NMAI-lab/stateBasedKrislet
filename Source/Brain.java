@@ -62,6 +62,7 @@ class Brain extends Thread implements SensorInput
     {
 	ObjectInfo object;
 	boolean kickedBall = false;
+	ObjectInfo goal = null;
 	int n = 0;
 	
 	// first put it somewhere on my side
@@ -70,12 +71,25 @@ class Brain extends Thread implements SensorInput
 
 	while( !m_timeOver )
 	    {
-		if( kickedBall == false )
+		if( !kickedBall )
 			{
 			object = m_memory.getObject("ball");
+			// Figure out which goal to aim at and remember
+			// where it is if visible
+			if ( m_side == 'l' )
+				{
+				if ( m_memory.getObject("goal r") != null)
+					goal = m_memory.getObject("goal r");
+				}
+			else 
+				{
+				if ( m_memory.getObject("goal l") != null)
+					goal = m_memory.getObject("goal l");
+				}
+			
 			if( object == null )
 			    {
-				// If you don't know where is ball then find it
+				// If you don't know where ball is then find it
 				m_krislet.turn(40);
 				m_memory.waitForNewInfo();
 			    }
@@ -91,17 +105,26 @@ class Brain extends Thread implements SensorInput
 			    }
 			else 
 			    {
-				// We know where is ball and we can kick it
+				// We know where ball is and we can kick it
 				// so look for goal
 				if( m_side == 'l' )
 				    object = m_memory.getObject("goal r");
 				else
 				    object = m_memory.getObject("goal l");
-	
+				
+				// Turn towards where you last saw the goal
 				if( object == null )
 				    {
-					m_krislet.turn(40);
-					m_memory.waitForNewInfo();
+					if ( goal.m_direction < 0)
+						{
+						m_krislet.turn(-25);
+						m_memory.waitForNewInfo();
+						}
+					else if (goal.m_direction > 0)
+						{
+						m_krislet.turn(25);
+						m_memory.waitForNewInfo();
+						}
 				    }
 				else
 					{
@@ -111,7 +134,7 @@ class Brain extends Thread implements SensorInput
 			    }
 			}
 		// Do a spin if you just kicked the ball
-		else if( kickedBall == true )
+		else
 			{
 			object = m_memory.getObject("ball");
 			while ( object != null )
