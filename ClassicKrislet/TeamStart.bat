@@ -1,4 +1,4 @@
-start java Krislet -team Carleton -port 7000
+start java Krislet -team Carleton
 ping localhost
-start java Krislet -team University -port 7000
+start java Krislet -team University
 ping localhost
