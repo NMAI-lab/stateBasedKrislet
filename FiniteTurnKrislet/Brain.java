@@ -61,6 +61,7 @@ class Brain extends Thread implements SensorInput
     public void run()
     {
 	ObjectInfo object;
+	int turnAngle = 10;
 
 	// first put it somewhere on my side
 	if(Pattern.matches("^before_kick_off.*",m_playMode))
@@ -72,7 +73,7 @@ class Brain extends Thread implements SensorInput
 		if( object == null )
 		    {
 			// If you don't know where is ball then find it
-			m_krislet.turn(10);
+			m_krislet.turn(turnAngle);
 			m_memory.waitForNewInfo();
 		    }
 		else if( object.m_distance > 1.0 )
@@ -80,12 +81,12 @@ class Brain extends Thread implements SensorInput
 			// If ball is too far then
 			// turn to ball or 
 			// if we have correct direction then go to ball
-			if( (object.m_direction > 10) || (object.m_direction < -10) )
+			if( (object.m_direction > turnAngle) || (object.m_direction < (-1 * turnAngle)) )
 			{
 			    if(object.m_direction > 0)
-			    	m_krislet.turn(10);
+			    	m_krislet.turn(turnAngle);
 			    else
-			    	m_krislet.turn(-10);
+			    	m_krislet.turn(-1 * turnAngle);
 			}
 			else
 			    m_krislet.dash(10*object.m_distance);
@@ -101,7 +102,7 @@ class Brain extends Thread implements SensorInput
 
 			if( object == null )
 			    {
-				m_krislet.turn(10);
+				m_krislet.turn(turnAngle);
 				m_memory.waitForNewInfo();
 			    }
 			else
