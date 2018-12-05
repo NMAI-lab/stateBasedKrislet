@@ -68,6 +68,7 @@ class Brain extends Thread implements SensorInput
     	int turnAngle = 10;
     	float ballDistance = 0;
     	float ballDirection = 0;
+    	float goalDirection = 0;
 
     	// first put it somewhere on my side
     	if (Pattern.matches("^before_kick_off.*",m_playMode)) {
@@ -87,7 +88,8 @@ class Brain extends Thread implements SensorInput
 
     		if (object != null) {
     			seeGoal = true;
-    			if (object.m_direction > 0) {
+    			goalDirection = object.m_direction;
+    			if (goalDirection > 0) {
     				lastGoalDirection = 1;
     			} else {
     				lastGoalDirection = -1;
@@ -129,7 +131,7 @@ class Brain extends Thread implements SensorInput
     			if (ballClose) {
     				if (seeGoal) {
     					// seeBall && ballClose && seeGoal -> kick
-    					m_krislet.kick(100, ballDirection);
+    					m_krislet.kick(100, goalDirection);
     				} else {
     					// seeBall && ballClose && !seeGoal -> turn last known goal direction
     					m_krislet.turn(lastGoalDirection * turnAngle);
