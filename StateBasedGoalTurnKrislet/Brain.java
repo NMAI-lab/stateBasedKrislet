@@ -60,10 +60,14 @@ class Brain extends Thread implements SensorInput
 
     public void run() {
     	ObjectInfo object;
-    	int turnCount = 0;
-    	int turnDirection = -1;
-    	boolean lastGoalDirectionPositive = false;
+    	int lastGoalDirection = -1;
+    	int lastBallDirection = -1;
+    	boolean seeGoal = false;
+    	boolean seeBall = false;
+    	boolean ballClose = false;
     	int turnAngle = 10;
+    	float ballDistance = 0;
+    	float ballDirection = 0;
 
     	// first put it somewhere on my side
     	if (Pattern.matches("^before_kick_off.*",m_playMode)) {
@@ -73,7 +77,8 @@ class Brain extends Thread implements SensorInput
     	while(!m_timeOver) {
     		// Check to see if the goal is visible. 
     		// If so, record if the direction is positive or negative
-    		// Used for the state based behaviour
+    		// Used for the state based behaviour.
+    		// Also record if goal was visible.
     		if( m_side == 'l' ) {
     			object = m_memory.getObject("goal r");
     		} else {
@@ -81,47 +86,64 @@ class Brain extends Thread implements SensorInput
     		}
 
     		if (object != null) {
+    			seeGoal = true;
     			if (object.m_direction > 0) {
-    				turnDirection = 1;
+    				lastGoalDirection = 1;
     			} else {
-    				turnDirection = -1;
+    				lastGoalDirection = -1;
     			}
+    		} else {
+    			seeGoal = false;
     		}
-
+    		
+    		// Check to see if the ball is visible. 
+    		// If so, record if the direction is positive or negative
+    		// Used for the state based behaviour.
+    		// Also record if ball is visible, far or close.
     		object = m_memory.getObject("ball");
-    		if(object == null) {
-    			// If you don't know where is ball then find it
-    			m_krislet.turn(turnAngle);
-    			m_memory.waitForNewInfo();
-		    } else if( object.m_distance > 1.0 ) {
-		    	// If ball is too far then
-		    	// turn to ball or 
-		    	// if we have correct direction then go to ball
-		    	if ((object.m_direction > turnAngle) || (object.m_direction < (-1 * turnAngle))) {
-		    		if(object.m_direction > 0) {
-		    			m_krislet.turn(turnAngle);
-		    		} else {
-		    			m_krislet.turn(-1 * turnAngle);
-		    		}
-		    	} else {
-		    		m_krislet.dash(10*object.m_distance);
-		    	}
-		    } else {
-		    	// We know where is ball and we can kick it
-		    	// so look for goal
-		    	if( m_side == 'l' ) {
-		    		object = m_memory.getObject("goal r");
-		    	} else {
-		    		object = m_memory.getObject("goal l");
-		    	}
-		    	
-		    	if(object == null) {
-		    		m_krislet.turn(turnDirection * turnAngle);
-		    		m_memory.waitForNewInfo();
-		    	} else {
-		    		m_krislet.kick(100, object.m_direction);
-		    	}
-		    }
+    		if (object != null) {
+    			seeBall = true;
+    			
+    			// Check the distance to the ball
+    			ballDistance = object.m_distance;
+    			if (ballDistance > 1.0) {
+    				ballClose = false;
+    			} else {
+    				ballClose = true;
+    			}
+    			
+    			ballDirection = object.m_direction;
+    			if (ballDirection > 0) {
+    				lastBallDirection = 1;
+    			} else {
+    				lastBallDirection = -1;
+    			}
+    		} else {
+    			seeBall = false;
+    			ballClose = false;
+    		}
+    		
+
+    		// Perform the action
+    		if (seeBall) {
+    			if (ballClose) {
+    				if (seeGoal) {
+    					// seeBall && ballClose && seeGoal -> kick
+    					m_krislet.kick(100, ballDirection);
+    				} else {
+    					// seeBall && ballClose && !seeGoal -> turn last known goal direction
+    					m_krislet.turn(lastGoalDirection * turnAngle);
+    				}
+    			} else {
+    				// seeBall && !ballClose -> dash
+    				m_krislet.dash(10 * ballDistance);
+    			}
+    		} else {
+    			// !seeBall -> turn last known ball direction
+    			m_krislet.turn(lastBallDirection * turnAngle);
+    		}
+    		m_memory.waitForNewInfo();
+
 		
     		// sleep one step to ensure that we will not send
     		// two commands in one cycle.
