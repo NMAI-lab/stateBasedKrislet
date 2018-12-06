@@ -137,8 +137,15 @@ class Brain extends Thread implements SensorInput
     					m_krislet.turn(lastGoalDirection * turnAngle);
     				}
     			} else {
-    				// seeBall && !ballClose -> dash
-    				m_krislet.dash(10 * ballDistance);
+    				
+    				if (Math.abs(ballDirection) > turnAngle) {
+    					// Ball is visible but not close... but it's also outside of the turning angle. Turn
+    					// to face it more head on.
+    					m_krislet.turn(lastBallDirection * turnAngle);
+    				} else {
+    					// seeBall && !ballClose -> dash
+    					m_krislet.dash(10 * ballDistance);
+    				}
     			}
     		} else {
     			// !seeBall -> turn last known ball direction
